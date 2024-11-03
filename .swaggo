@@ -1,0 +1,6 @@
+replace null.String string
+replace null.Time time.Time
+replace null.Int16 int
+replace null.Int32 int
+replace null.Int64 int
+replace null.Float float64

@@ -1,0 +1,845 @@
+basePath: /api
+definitions:
+  db.Article:
+    properties:
+      article_type_uuid:
+        type: string
+      desc:
+        type: string
+      name:
+        type: string
+      purchase_price:
+        type: number
+      resell_price:
+        type: number
+      uuid:
+        type: string
+    type: object
+  db.ArticleTransaction:
+    properties:
+      amount:
+        type: integer
+      article_uuid:
+        type: string
+      transaction_uuid:
+        type: string
+      uuid:
+        type: string
+    type: object
+  db.ArticleType:
+    properties:
+      desc:
+        type: string
+      name:
+        type: string
+      uuid:
+        type: string
+    type: object
+  db.Event:
+    properties:
+      desc:
+        type: string
+      from_date:
+        type: string
+      name:
+        type: string
+      to_date:
+        type: string
+      uuid:
+        type: string
+    type: object
+  db.Transaction:
+    properties:
+      date:
+        type: string
+      price:
+        type: number
+      uuid:
+        type: string
+    type: object
+  e.ErrorDetail:
+    properties:
+      field:
+        description: Field causing the error
+        type: string
+      issue:
+        description: Description of the issue with the field
+        type: string
+    type: object
+  e.ErrorResponse:
+    properties:
+      code:
+        description: Error code
+        type: string
+      details:
+        description: List of field-specific errors
+        items:
+          $ref: '#/definitions/e.ErrorDetail'
+        type: array
+      error:
+        description: Stack Trace
+        type: string
+      message:
+        description: Human-readable error message
+        type: string
+    type: object
+  schemas.CreateArticle:
+    properties:
+      article_type_uuid:
+        type: string
+      desc:
+        type: string
+      name:
+        type: string
+      purchase_price:
+        type: number
+      resell_price:
+        type: number
+    required:
+    - article_type_uuid
+    - name
+    - purchase_price
+    - resell_price
+    type: object
+  schemas.CreateArticleType:
+    properties:
+      desc:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  schemas.CreateEvent:
+    properties:
+      desc:
+        type: string
+      from_date:
+        type: string
+      name:
+        type: string
+      to_date:
+        type: string
+    required:
+    - from_date
+    - name
+    - to_date
+    type: object
+  schemas.CreateTransaction:
+    properties:
+      date:
+        example: "2024-01-24T00:00:00Z"
+        type: string
+      price:
+        type: number
+    required:
+    - date
+    - price
+    type: object
+  schemas.UpdateArticle:
+    properties:
+      article_type_uuid:
+        $ref: '#/definitions/uuid.NullUUID'
+      desc:
+        type: string
+      name:
+        type: string
+      purchase_price:
+        type: number
+      resell_price:
+        type: number
+    type: object
+  schemas.UpdateArticleTransaction:
+    properties:
+      amount:
+        type: integer
+      article_uuid:
+        $ref: '#/definitions/uuid.NullUUID'
+      transaction_uuid:
+        $ref: '#/definitions/uuid.NullUUID'
+    type: object
+  schemas.UpdateArticleType:
+    properties:
+      desc:
+        type: string
+      name:
+        type: string
+    type: object
+  schemas.UpdateTransaction:
+    properties:
+      date:
+        example: "2024-01-24T00:00:00Z"
+        type: string
+      price:
+        type: number
+    type: object
+  uuid.NullUUID:
+    properties:
+      uuid:
+        type: string
+      valid:
+        description: Valid is true if UUID is not NULL
+        type: boolean
+    type: object
+host: localhost:8888
+info:
+  contact: {}
+  description: Backend vor Rupay
+  title: Rupay Backend
+  version: "1.0"
+paths:
+  /article:
+    post:
+      consumes:
+      - application/json
+      description: Create a new article with the provided payload
+      parameters:
+      - description: Create article payload
+        in: body
+        name: article
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateArticle'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created article
+          schema:
+            $ref: '#/definitions/db.Article'
+        "400":
+          description: Invalid payload
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Failed to create article
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Create a new article
+      tags:
+      - Articles
+  /article-transaction:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all article transactions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of article transactions
+          schema:
+            items:
+              $ref: '#/definitions/db.ArticleTransaction'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Retrieve all article transactions
+      tags:
+      - ArticleTransactions
+    post:
+      consumes:
+      - application/json
+      description: Create a new article transaction with the provided payload
+      parameters:
+      - description: CreateArticleTransaction payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/db.ArticleTransaction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ArticleTransaction data
+          schema:
+            $ref: '#/definitions/db.ArticleTransaction'
+        "400":
+          description: Invalid Payload
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Create a new article transaction
+      tags:
+      - ArticleTransactions
+  /article-transaction/{articleTransactionId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an article transaction by the provided ID
+      parameters:
+      - description: Article Transaction ID
+        in: path
+        name: articleTransactionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ArticleTransaction deleted successfully
+        "404":
+          description: Article transaction not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Failed to delete ArticleTransaction
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Delete an article transaction
+      tags:
+      - ArticleTransactions
+    get:
+      consumes:
+      - application/json
+      description: Retrieve an article transaction by the provided ID
+      parameters:
+      - description: Article Transaction ID
+        in: path
+        name: articleTransactionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ArticleTransaction data
+          schema:
+            $ref: '#/definitions/db.ArticleTransaction'
+        "404":
+          description: Article transaction not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Retrieve an article transaction
+      tags:
+      - ArticleTransactions
+    put:
+      consumes:
+      - application/json
+      description: Update an article transaction with the provided payload
+      parameters:
+      - description: Article Transaction ID
+        in: path
+        name: articleTransactionId
+        required: true
+        type: string
+      - description: UpdateArticleTransaction payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.UpdateArticleTransaction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ArticleTransaction data
+          schema:
+            $ref: '#/definitions/db.ArticleTransaction'
+        "400":
+          description: Invalid Payload
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "404":
+          description: Article transaction not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Update an article transaction
+      tags:
+      - ArticleTransactions
+  /article-type:
+    get:
+      description: Get a list of all article types
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved all article types
+          schema:
+            items:
+              $ref: '#/definitions/db.ArticleType'
+            type: array
+        "500":
+          description: Failed to retrieve article types
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Retrieve all article types
+      tags:
+      - ArticleTypes
+    post:
+      consumes:
+      - application/json
+      description: Create a new article type with the provided payload
+      parameters:
+      - description: Create article type payload
+        in: body
+        name: articleType
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateArticleType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created article type
+          schema:
+            $ref: '#/definitions/db.ArticleType'
+        "400":
+          description: Invalid payload
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Failed to create article type
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Create a new article type
+      tags:
+      - ArticleTypes
+  /article-type/{articleTypeId}:
+    delete:
+      description: Remove an article type using its ID
+      parameters:
+      - description: Article Type ID
+        in: path
+        name: articleTypeId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully deleted article type
+        "404":
+          description: Article type not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Failed to delete article type
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Delete an article type by ID
+      tags:
+      - ArticleTypes
+    get:
+      description: Retrieve an article type using its ID
+      parameters:
+      - description: Article Type ID
+        in: path
+        name: articleTypeId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved article type
+          schema:
+            $ref: '#/definitions/db.ArticleType'
+        "404":
+          description: Article type not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Failed to retrieve article type
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Get an article type by ID
+      tags:
+      - ArticleTypes
+    put:
+      consumes:
+      - application/json
+      description: Update an article type with the provided ID and payload
+      parameters:
+      - description: Article Type ID
+        in: path
+        name: articleTypeId
+        required: true
+        type: string
+      - description: Update article type payload
+        in: body
+        name: articleType
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.UpdateArticleType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated article type
+          schema:
+            $ref: '#/definitions/db.ArticleType'
+        "400":
+          description: Invalid payload
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "404":
+          description: Article type not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Failed to update article type
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Update an existing article type
+      tags:
+      - ArticleTypes
+  /articles:
+    get:
+      description: Get a list of all articles
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved all articles
+          schema:
+            items:
+              $ref: '#/definitions/db.Article'
+            type: array
+        "500":
+          description: Failed to retrieve articles
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Retrieve all articles
+      tags:
+      - Articles
+  /articles/{articleId}:
+    delete:
+      description: Remove an article using its ID
+      parameters:
+      - description: Article ID
+        in: path
+        name: articleId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully deleted article
+        "404":
+          description: Article not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Failed to delete article
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Delete an article by ID
+      tags:
+      - Articles
+    get:
+      description: Retrieve an article using its ID
+      parameters:
+      - description: Article ID
+        in: path
+        name: articleId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved article
+          schema:
+            $ref: '#/definitions/db.Article'
+        "404":
+          description: Article not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Failed to retrieve article
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Get an article by ID
+      tags:
+      - Articles
+    put:
+      consumes:
+      - application/json
+      description: Update an article with the provided ID and payload
+      parameters:
+      - description: Article ID
+        in: path
+        name: articleId
+        required: true
+        type: string
+      - description: Update article payload
+        in: body
+        name: article
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.UpdateArticle'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated article
+          schema:
+            $ref: '#/definitions/db.Article'
+        "400":
+          description: Invalid payload
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "404":
+          description: Article not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Failed to update article
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Update an existing article
+      tags:
+      - Articles
+  /event:
+    post:
+      consumes:
+      - application/json
+      description: Create a new event with the provided details
+      parameters:
+      - description: CreateEvent payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateEvent'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Event data
+          schema:
+            $ref: '#/definitions/db.Event'
+        "400":
+          description: Invalid Payload
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Create a new event
+      tags:
+      - Events
+  /event/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an event by the provided ID
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Event deleted successfully
+        "404":
+          description: Event not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Delete an event by ID
+      tags:
+      - Events
+    get:
+      consumes:
+      - application/json
+      description: Retrieve an event by the provided ID
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Event data
+          schema:
+            $ref: '#/definitions/db.Event'
+        "404":
+          description: Event not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Retrieve an event by ID
+      tags:
+      - Events
+    patch:
+      consumes:
+      - application/json
+      description: Update an event by the provided id and details
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Event data
+          schema:
+            $ref: '#/definitions/db.Event'
+        "400":
+          description: Invalid Payload
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Update an event
+      tags:
+      - Events
+  /events:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all events
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of events
+          schema:
+            items:
+              $ref: '#/definitions/db.Event'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Retrieve all events
+      tags:
+      - Events
+  /transaction:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all transactions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of transactions
+          schema:
+            items:
+              $ref: '#/definitions/db.Transaction'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Retrieve all transactions
+      tags:
+      - Transactions
+    patch:
+      consumes:
+      - application/json
+      description: Update a transaction with the provided date and price
+      parameters:
+      - description: UpdateTransaction payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.UpdateTransaction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transaction data
+          schema:
+            $ref: '#/definitions/db.Transaction'
+        "400":
+          description: Invalid Payload
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Update a transaction
+      tags:
+      - Transactions
+    post:
+      consumes:
+      - application/json
+      description: Create a new transaction with the provided date and price
+      parameters:
+      - description: CreateTransaction payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateTransaction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transaction data
+          schema:
+            $ref: '#/definitions/db.Transaction'
+        "400":
+          description: Invalid Payload
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Create a new transaction
+      tags:
+      - Transactions
+  /transaction/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a transaction by the provided id
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Transaction deleted successfully
+        "404":
+          description: Transaction not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Failed to delete Transaction
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Delete a transaction
+      tags:
+      - Transactions
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a transaction by the provided id
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transaction data
+          schema:
+            $ref: '#/definitions/db.Transaction'
+        "404":
+          description: Transaction not found
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e.ErrorResponse'
+      summary: Retrieve a transaction
+      tags:
+      - Transactions
+swagger: "2.0"

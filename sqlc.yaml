@@ -1,0 +1,64 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "./db/migration/"
+    queries: "./db/query/"
+    gen:
+      go:
+        package: "db"
+        out: "db/sqlc"
+        emit_json_tags: true
+        emit_prepared_queries: true
+        emit_empty_slices: true
+        emit_interface: false
+        emit_exact_table_names: false
+        overrides:
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+          - db_type: "uuid"
+            nullable: true
+            go_type:
+              import: "github.com/google/uuid"
+              type: "NullUUID"
+          - db_type: "pg_catalog.varchar"
+            nullable: true
+            go_type:
+              import: "github.com/guregu/null/v5"
+              type: "String"
+          - db_type: "pg_catalog.timestamp"
+            nullable: true
+            go_type:
+              import: "github.com/guregu/null/v5"
+              type: "Time"
+          - db_type: "pg_catalog.timestamptz"
+            nullable: true
+            go_type:
+              import: "github.com/guregu/null/v5"
+              type: "Time"
+          - db_type: "pg_catalog.int2"
+            nullable: true
+            go_type:
+              import: "github.com/guregu/null/v5"
+              type: "Int16"
+          - db_type: "pg_catalog.int4"
+            nullable: true
+            go_type:
+              import: "github.com/guregu/null/v5"
+              type: "Int32"
+          - db_type: "pg_catalog.int8"
+            nullable: true
+            go_type:
+              import: "github.com/guregu/null/v5"
+              type: "Int64"
+          - db_type: "int"
+            nullable: true
+            go_type:
+              import: "github.com/guregu/null/v5"
+              type: "Int32"
+          - db_type: "pg_catalog.float8"
+            nullable: true
+            go_type:
+              import: "github.com/guregu/null/v5"
+              type: "Float"
