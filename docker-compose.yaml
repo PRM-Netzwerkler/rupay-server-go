@@ -1,5 +1,11 @@
 version: "3.9"
 services:
+  api:
+    build: .
+    ports:
+      - "8888:8888"
+    depends_on:
+      - postgres
   postgres:
     image: postgres:latest
     container_name: postgres_rupay
