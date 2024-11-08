@@ -8,6 +8,7 @@ services:
     ports:
       - "8888:8888"
     image: api_image:latest
+    pull_policy: build
     depends_on:
       - postgres
   postgres:
