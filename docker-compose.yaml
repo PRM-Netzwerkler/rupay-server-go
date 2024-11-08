@@ -17,6 +17,7 @@ services:
     container_name: rupay-postgres
     volumes:
       - db:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     env_file:
       - ./app.env
     healthcheck:
