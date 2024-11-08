@@ -9,8 +9,6 @@ services:
       - "8888:8888"
     image: api_image:latest
     pull_policy: build
-    volumes:
-      - ./db/migration:/app/db/migration
     depends_on:
       - postgres
 
