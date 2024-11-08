@@ -5,6 +5,7 @@ services:
     build: .
     ports:
       - "8888:8888"
+    image: api_images:latest
     depends_on:
       - postgres
   postgres:
