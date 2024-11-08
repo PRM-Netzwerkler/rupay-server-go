@@ -11,6 +11,7 @@ services:
     pull_policy: build
     depends_on:
       - postgres
+
   postgres:
     image: postgres:latest
     container_name: rupay-postgres
@@ -23,23 +24,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-  migrate:
-    image: migrate/migrate
-    pull_policy: build
-    container_name: rupay-migrate
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./db/migration/:/migration
-    command:
-      [
-        "-path",
-        "/migration",
-        "-database",
-        "postgresql://root:secret@postgres:5432/rupay?sslmode=disable",
-        "up",
-      ]
 
 volumes:
   db:

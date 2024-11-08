@@ -12,6 +12,7 @@ import (
 	"github.com/KevinGruber2001/rupay-bar-backend/util"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-migrate/migrate"
 	_ "github.com/lib/pq"
 	"github.com/supertokens/supertokens-golang/recipe/dashboard"
 	"github.com/supertokens/supertokens-golang/recipe/emailpassword"
@@ -21,6 +22,9 @@ import (
 	_ "github.com/KevinGruber2001/rupay-bar-backend/docs"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+
+	_ "github.com/golang-migrate/migrate/database/postgres" // Import the postgres database driver
+	_ "github.com/golang-migrate/migrate/source/file"       // Import the file source driver
 )
 
 var (
@@ -41,6 +45,20 @@ var (
 	TransactionRoutes        routes.TransactionRoutes
 )
 
+func runMigrations() {
+	m, err := migrate.New(
+		"file://./db/migration", // your migration folder
+		"postgresql://root:secret@postgres:5432/rupay?sslmode=disable")
+	if err != nil {
+		log.Fatalf("could not create migrate instance: %v", err)
+	}
+	err = m.Up() // or m.Migrate(0) to apply all migrations
+	if err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("could not apply migrations: %v", err)
+	}
+	log.Println("migrations applied successfully")
+}
+
 func init() {
 
 	ctx = context.TODO()
@@ -58,6 +76,10 @@ func init() {
 	db = dbCon.New(conn)
 
 	fmt.Println("PostgreSql connected successfully...")
+
+	// db migrations
+
+	runMigrations()
 
 	// Supertokens Init
 
