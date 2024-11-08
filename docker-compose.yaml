@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   api:
-    container_name: server_rupay
+    container_name: rupay-server
     build:
       context: .
       dockerfile: Dockerfile
@@ -13,11 +13,26 @@ services:
       - postgres
   postgres:
     image: postgres:latest
-    container_name: postgres_rupay
+    container_name: rupay-postgres
     volumes:
       - db:/var/lib/postgresql/data
     env_file:
       - ./app.env
+  migrate:
+    image: migrate/migrate
+    container_name: rupay-migrate
+    depends_on:
+      - postgres
+    volumes:
+      - ./db/migration/:/migration
+    command:
+      [
+        "-path",
+        "/migration/",
+        "-database",
+        "postgresql://root:secret@postgres:5432/rupay?sslmode=disable",
+        "up",
+      ]
 
 volumes:
   db:
