@@ -47,7 +47,7 @@ var (
 
 func runMigrations() {
 	m, err := migrate.New(
-		"file://./db/migration", // your migration folder
+		"file:///app/db/migration", // your migration folder
 		"postgresql://root:secret@postgres:5432/rupay?sslmode=disable")
 	if err != nil {
 		log.Fatalf("could not create migrate instance: %v", err)
