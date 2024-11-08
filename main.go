@@ -79,7 +79,7 @@ func init() {
 
 	// db migrations
 
-	// runMigrations()
+	runMigrations()
 
 	// Supertokens Init
 
