@@ -1,0 +1,4 @@
+CREATE TABLE "user" (
+    "name" VARCHAR NOT NULL PRIMARY KEY,
+    "code" VARCHAR NOT NULL
+);

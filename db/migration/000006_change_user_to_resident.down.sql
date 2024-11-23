@@ -1,0 +1,1 @@
+ALTER TABLE resident RENAME TO "user";

@@ -8,14 +8,14 @@ import (
 type CreateArticleType struct {
 	Name          string      `json:"name" binding:"required"`
 	Desc          null.String `json:"desc"`
-	IconCodepoint int32       `json:"icon_codepoint binding:"required"`
+	IconCodepoint int32       `json:"icon_codepoint" binding:"required"`
 	Color         string      `json:"color" binding:"required"`
 }
 
 type UpdateArticleType struct {
 	Name          null.String `json:"name"`
 	Desc          null.String `json:"desc"`
-	IconCodepoint null.Int32  `json:"icon_codepoint`
+	IconCodepoint null.Int32  `json:"icon_codepoint"`
 	Color         null.String `json:"color"`
 }
 

@@ -37,12 +37,14 @@ var (
 	ArticleTypeController        controllers.ArticleTypeController
 	EventController              controllers.EventController
 	TransactionController        controllers.TransactionController
+	UserController               controllers.UserController
 
 	ArticleRoutes            routes.ArticleRoutes
 	ArticleTransactionRoutes routes.ArticleTransactionRoutes
 	ArticleTypeRoutes        routes.ArticleTypeRoutes
 	EventRoutes              routes.EventRoutes
 	TransactionRoutes        routes.TransactionRoutes
+	UserRoutes               routes.UserRoutes
 )
 
 func runMigrations() {
@@ -79,7 +81,7 @@ func init() {
 
 	// db migrations
 
-	//runMigrations()
+	runMigrations()
 
 	// Supertokens Init
 
@@ -124,6 +126,9 @@ func init() {
 	TransactionController = *controllers.NewTransactionController(db, ctx)
 	TransactionRoutes = routes.NewRouteTransaction(TransactionController)
 
+	UserController = *controllers.NewUserController(db, ctx)
+	UserRoutes = routes.NewRouteUser(UserController)
+
 	server = gin.Default()
 
 	// CORS
@@ -159,6 +164,12 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
+	e := util.NewClient()
+
+	if e != nil {
+		log.Fatalf("failed to connect to mqtt broker: %v", err)
+	}
+
 	router := server.Group("/api")
 
 	// swagger middleware to serve the API docs
@@ -169,10 +180,12 @@ func main() {
 	ArticleTransactionRoutes.ArticleTransactionRoute(router)
 	EventRoutes.EventRoute(router)
 	TransactionRoutes.TransactionRoute(router)
+	UserRoutes.UserRoute(router)
 
 	// server.NoRoute(func(ctx *gin.Context) {
 	//     ctx.JSON(http.StatusNotFound, gin.H{"status": "failed", "message": fmt.Sprintf("The specified route %s not found", ctx.Request.URL)})
 	// })
 
 	log.Fatal(server.Run(":" + config.ServerAddress))
+
 }

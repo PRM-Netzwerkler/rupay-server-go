@@ -6,19 +6,20 @@ import (
 )
 
 type TransactionRoutes struct {
-    TransactionController controllers.TransactionController
+	TransactionController controllers.TransactionController
 }
 
 func NewRouteTransaction(TransactionController controllers.TransactionController) TransactionRoutes {
-    return TransactionRoutes{TransactionController}
+	return TransactionRoutes{TransactionController}
 }
 
 func (cr *TransactionRoutes) TransactionRoute(rg *gin.RouterGroup) {
 
-    router := rg.Group("transaction")
-    router.POST("/", cr.TransactionController.CreateTransaction)
-    router.GET("/", cr.TransactionController.GetAllTransactions)
-    router.PATCH("/:transactionId", cr.TransactionController.UpdateTransaction)
-    router.GET("/:transactionId", cr.TransactionController.GetTransactionById)
-    router.DELETE("/:transactionId", cr.TransactionController.DeleteTransactionById)
+	router := rg.Group("transaction")
+	router.POST("/:username", cr.TransactionController.CreateTransaction)
+	router.GET("/", cr.TransactionController.GetAllTransactions)
+	router.PATCH("/:transactionId", cr.TransactionController.UpdateTransaction)
+	router.GET("/:transactionId", cr.TransactionController.GetTransactionById)
+	router.DELETE("/:transactionId", cr.TransactionController.DeleteTransactionById)
+	router.GET("/sava", cr.TransactionController.GetSavaPageUser)
 }

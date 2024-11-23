@@ -3,11 +3,16 @@ package controllers
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"time"
 
 	db "github.com/KevinGruber2001/rupay-bar-backend/db/sqlc"
 	e "github.com/KevinGruber2001/rupay-bar-backend/errors"
 	"github.com/KevinGruber2001/rupay-bar-backend/schemas"
+	"github.com/KevinGruber2001/rupay-bar-backend/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -19,6 +24,92 @@ type TransactionController struct {
 
 func NewTransactionController(db *db.Queries, ctx context.Context) *TransactionController {
 	return &TransactionController{db, ctx}
+}
+
+func (cc *TransactionController) GetSavaPageUser(ctx *gin.Context) {
+
+	// Call Arduino to start reading
+	mqtt := util.GetClient()
+
+	mqtt.Publish("read", "bar1/read")
+
+	code, err := mqtt.WaitForMessage("bar1/client", 60*time.Second)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, e.ErrorResponse{Code: e.InternalServerError, Message: "Timeout waiting for reader", Error: err.Error()})
+		return
+	}
+
+	println(code)
+
+	// retrieve the user, that has the code
+
+	user, err := cc.db.GetUserByCode(ctx, code)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, e.ErrorResponse{Code: e.InternalServerError, Message: "Code does not exist", Error: err.Error()})
+		return
+	}
+
+	// get userdata from savapage
+
+	config, err := util.LoadConfig("../.")
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, e.ErrorResponse{Code: e.InternalServerError, Message: "Failed to Load Config", Error: err.Error()})
+		return
+	}
+
+	url := config.SavaPageUrl + fmt.Sprintf("financial/account/balance?type=USER&name=%s", user.Name)
+	req, err := http.NewRequest("GET", url, nil)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, e.ErrorResponse{Code: e.InternalServerError, Message: "Failed to Reach SavaPage", Error: err.Error()})
+		return
+	}
+
+	req.SetBasicAuth(config.SavaPageAdmin, config.SavaPagePassword)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, e.ErrorResponse{Code: e.InternalServerError, Message: "Failed to Reach SavaPage", Error: err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		println(resp.StatusCode)
+		ctx.JSON(http.StatusInternalServerError, e.ErrorResponse{Code: e.InternalServerError, Message: "Failed to Reach SavaPage", Error: "Error"})
+		return
+	}
+
+	// Read and parse the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return
+	}
+
+	var response schemas.SavaResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		fmt.Println("Error decoding JSON response:", err)
+		return
+	}
+
+	if !response.Success {
+		ctx.JSON(http.StatusInternalServerError, e.ErrorResponse{Code: e.InternalServerError, Message: "Failed to Reach SavaPage", Error: "Error"})
+		return
+	}
+
+	balance := 0.0
+	if response.Result.Valid {
+		balance = response.Result.Float64
+	}
+
+	res := schemas.SavaUser{Name: user.Name, Balance: balance}
+
+	ctx.JSON(http.StatusOK, res)
 }
 
 // @Summary Create a new transaction
@@ -33,6 +124,8 @@ func NewTransactionController(db *db.Queries, ctx context.Context) *TransactionC
 func (cc *TransactionController) CreateTransaction(ctx *gin.Context) {
 	var payload *schemas.CreateTransaction
 
+	UserName := ctx.Param("username")
+
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
 		ctx.JSON(http.StatusBadRequest, e.ErrorResponse{Code: e.InvalidPayload, Message: "Payload is invalid", Error: err.Error()})
 		return
@@ -41,6 +134,46 @@ func (cc *TransactionController) CreateTransaction(ctx *gin.Context) {
 	args := &db.CreateTransactionParams{
 		Date:  payload.Date,
 		Price: payload.Price,
+	}
+
+	// TODO change balance in savapage
+
+	// start savapage request
+
+	config, err := util.LoadConfig("../.")
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, e.ErrorResponse{Code: e.InternalServerError, Message: "Failed to Reach SavaPage", Error: err.Error()})
+		return
+	}
+
+	url := config.SavaPageUrl + fmt.Sprintf("financial/account/balance?type=USER&name=%s&amount=-%.2f&adjust=true&details=rupay_transaction", UserName, payload.Price)
+
+	print(url)
+
+	req, err := http.NewRequest("POST", url, nil)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, e.ErrorResponse{Code: e.InternalServerError, Message: "Failed to Reach SavaPage", Error: err.Error()})
+		return
+	}
+	println(config.SavaPageAdmin)
+	println(config.SavaPagePassword)
+
+	req.SetBasicAuth(config.SavaPageAdmin, config.SavaPagePassword)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, e.ErrorResponse{Code: e.InternalServerError, Message: "Failed to Reach SavaPage", Error: err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		println(resp.StatusCode)
+		ctx.JSON(http.StatusInternalServerError, e.ErrorResponse{Code: e.InternalServerError, Message: "Failed to Reach SavaPage", Error: "Error"})
+		return
 	}
 
 	Transaction, err := cc.db.CreateTransaction(ctx, *args)

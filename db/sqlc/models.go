@@ -44,6 +44,11 @@ type Event struct {
 	ToDate   time.Time   `json:"to_date"`
 }
 
+type Resident struct {
+	Name string `json:"name"`
+	Code string `json:"code"`
+}
+
 type Transaction struct {
 	Uuid  uuid.UUID `json:"uuid"`
 	Date  time.Time `json:"date"`

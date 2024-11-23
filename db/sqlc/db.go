@@ -39,6 +39,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createTransactionStmt, err = db.PrepareContext(ctx, createTransaction); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateTransaction: %w", err)
 	}
+	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
+	}
 	if q.deleteArticleStmt, err = db.PrepareContext(ctx, deleteArticle); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteArticle: %w", err)
 	}
@@ -53,6 +56,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.deleteTransactionStmt, err = db.PrepareContext(ctx, deleteTransaction); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteTransaction: %w", err)
+	}
+	if q.deleteUserStmt, err = db.PrepareContext(ctx, deleteUser); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteUser: %w", err)
 	}
 	if q.getArticleByIdStmt, err = db.PrepareContext(ctx, getArticleById); err != nil {
 		return nil, fmt.Errorf("error preparing query GetArticleById: %w", err)
@@ -90,6 +96,15 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getTransactionsStmt, err = db.PrepareContext(ctx, getTransactions); err != nil {
 		return nil, fmt.Errorf("error preparing query GetTransactions: %w", err)
 	}
+	if q.getUserByCodeStmt, err = db.PrepareContext(ctx, getUserByCode); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUserByCode: %w", err)
+	}
+	if q.getUserByIdStmt, err = db.PrepareContext(ctx, getUserById); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUserById: %w", err)
+	}
+	if q.getUsersStmt, err = db.PrepareContext(ctx, getUsers); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUsers: %w", err)
+	}
 	if q.updateArticleStmt, err = db.PrepareContext(ctx, updateArticle); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateArticle: %w", err)
 	}
@@ -104,6 +119,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.updateTransactionStmt, err = db.PrepareContext(ctx, updateTransaction); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateTransaction: %w", err)
+	}
+	if q.updateUserStmt, err = db.PrepareContext(ctx, updateUser); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateUser: %w", err)
 	}
 	return &q, nil
 }
@@ -135,6 +153,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createTransactionStmt: %w", cerr)
 		}
 	}
+	if q.createUserStmt != nil {
+		if cerr := q.createUserStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createUserStmt: %w", cerr)
+		}
+	}
 	if q.deleteArticleStmt != nil {
 		if cerr := q.deleteArticleStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteArticleStmt: %w", cerr)
@@ -158,6 +181,11 @@ func (q *Queries) Close() error {
 	if q.deleteTransactionStmt != nil {
 		if cerr := q.deleteTransactionStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteTransactionStmt: %w", cerr)
+		}
+	}
+	if q.deleteUserStmt != nil {
+		if cerr := q.deleteUserStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteUserStmt: %w", cerr)
 		}
 	}
 	if q.getArticleByIdStmt != nil {
@@ -220,6 +248,21 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getTransactionsStmt: %w", cerr)
 		}
 	}
+	if q.getUserByCodeStmt != nil {
+		if cerr := q.getUserByCodeStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserByCodeStmt: %w", cerr)
+		}
+	}
+	if q.getUserByIdStmt != nil {
+		if cerr := q.getUserByIdStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserByIdStmt: %w", cerr)
+		}
+	}
+	if q.getUsersStmt != nil {
+		if cerr := q.getUsersStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUsersStmt: %w", cerr)
+		}
+	}
 	if q.updateArticleStmt != nil {
 		if cerr := q.updateArticleStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateArticleStmt: %w", cerr)
@@ -243,6 +286,11 @@ func (q *Queries) Close() error {
 	if q.updateTransactionStmt != nil {
 		if cerr := q.updateTransactionStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateTransactionStmt: %w", cerr)
+		}
+	}
+	if q.updateUserStmt != nil {
+		if cerr := q.updateUserStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateUserStmt: %w", cerr)
 		}
 	}
 	return err
@@ -289,11 +337,13 @@ type Queries struct {
 	createArticleTypeStmt                      *sql.Stmt
 	createEventStmt                            *sql.Stmt
 	createTransactionStmt                      *sql.Stmt
+	createUserStmt                             *sql.Stmt
 	deleteArticleStmt                          *sql.Stmt
 	deleteArticleTransactionStmt               *sql.Stmt
 	deleteArticleTypeStmt                      *sql.Stmt
 	deleteEventStmt                            *sql.Stmt
 	deleteTransactionStmt                      *sql.Stmt
+	deleteUserStmt                             *sql.Stmt
 	getArticleByIdStmt                         *sql.Stmt
 	getArticleTransactionByIdStmt              *sql.Stmt
 	getArticleTransactionsStmt                 *sql.Stmt
@@ -306,11 +356,15 @@ type Queries struct {
 	getEventsStmt                              *sql.Stmt
 	getTransactionByIdStmt                     *sql.Stmt
 	getTransactionsStmt                        *sql.Stmt
+	getUserByCodeStmt                          *sql.Stmt
+	getUserByIdStmt                            *sql.Stmt
+	getUsersStmt                               *sql.Stmt
 	updateArticleStmt                          *sql.Stmt
 	updateArticleTransactionStmt               *sql.Stmt
 	updateArticleTypeStmt                      *sql.Stmt
 	updateEventStmt                            *sql.Stmt
 	updateTransactionStmt                      *sql.Stmt
+	updateUserStmt                             *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
@@ -322,11 +376,13 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createArticleTypeStmt:         q.createArticleTypeStmt,
 		createEventStmt:               q.createEventStmt,
 		createTransactionStmt:         q.createTransactionStmt,
+		createUserStmt:                q.createUserStmt,
 		deleteArticleStmt:             q.deleteArticleStmt,
 		deleteArticleTransactionStmt:  q.deleteArticleTransactionStmt,
 		deleteArticleTypeStmt:         q.deleteArticleTypeStmt,
 		deleteEventStmt:               q.deleteEventStmt,
 		deleteTransactionStmt:         q.deleteTransactionStmt,
+		deleteUserStmt:                q.deleteUserStmt,
 		getArticleByIdStmt:            q.getArticleByIdStmt,
 		getArticleTransactionByIdStmt: q.getArticleTransactionByIdStmt,
 		getArticleTransactionsStmt:    q.getArticleTransactionsStmt,
@@ -339,10 +395,14 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getEventsStmt:                              q.getEventsStmt,
 		getTransactionByIdStmt:                     q.getTransactionByIdStmt,
 		getTransactionsStmt:                        q.getTransactionsStmt,
+		getUserByCodeStmt:                          q.getUserByCodeStmt,
+		getUserByIdStmt:                            q.getUserByIdStmt,
+		getUsersStmt:                               q.getUsersStmt,
 		updateArticleStmt:                          q.updateArticleStmt,
 		updateArticleTransactionStmt:               q.updateArticleTransactionStmt,
 		updateArticleTypeStmt:                      q.updateArticleTypeStmt,
 		updateEventStmt:                            q.updateEventStmt,
 		updateTransactionStmt:                      q.updateTransactionStmt,
+		updateUserStmt:                             q.updateUserStmt,
 	}
 }
