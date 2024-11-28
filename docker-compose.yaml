@@ -30,3 +30,7 @@ services:
 
 volumes:
   db:
+
+networks:
+  rupay:
+    external: true

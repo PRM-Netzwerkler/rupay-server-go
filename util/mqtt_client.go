@@ -1,7 +1,11 @@
 package util
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -17,24 +21,23 @@ var (
 	once     sync.Once
 )
 
-func NewClient() error {
+func NewClient(con Config) error {
 	// This method creates some default options for us, most notably it sets the auto reconnect option to be true, and the default port to `1883`. Auto reconnect is really useful in IOT applications as the internet connection may not always be extremely strong.
 	opts := MQTT.NewClientOptions()
 
 	// The specified The connection type we are using is just plain unencrypted TCP/IP
-	opts.AddBroker("test.mosquitto.org:1883")
+	opts.AddBroker(con.MqttBroker)
 	// The client id needs to be unique, The argument passed was generated through a random number generator to avoid collisions.
-	opts.SetClientID("F`/hty$3{+JQ%,j9")
+	opts.SetClientID("con.MqttClientId")
+
+	opts.SetUsername(con.MqttClientName)
+	opts.SetPassword(con.MqttClientPassword)
+
+	tlsConfig, _ := createTLSConfig()
 
 	mqttClient := MQTT.NewClient(opts)
 
-	// Configure TLS settings if `useTLS` is true
-
-	// tlsConfig := &tls.Config{
-	// 	InsecureSkipVerify: false, // Set to true only for development/testing
-	// 	ClientAuth:         tls.NoClientCert,
-	// }
-	// opts.SetTLSConfig(tlsConfig)
+	opts.SetTLSConfig(tlsConfig)
 
 	// Set automatic reconnect
 	opts.SetAutoReconnect(true)
@@ -44,11 +47,34 @@ func NewClient() error {
 		return token.Error()
 	}
 
+	print("Connected to mqtt client")
+
 	instance = &Client{
 		mqttClient,
 	}
 
 	return nil
+}
+
+func createTLSConfig() (*tls.Config, error) {
+	caCert, err := os.ReadFile("./util/cert/ca-root.crt")
+	if err != nil {
+		cwd, _ := os.Getwd()
+		log.Println(cwd)
+		log.Fatalf("failed to load ca certificate: %v", err)
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	// load client cert and key
+	cert, err := tls.LoadX509KeyPair("./util/cert/mosquitto.crt", "./util/cert/mosquitto.key")
+	if err != nil {
+		panic("Failed to load client certificate")
+	}
+
+	tlsConfig := &tls.Config{RootCAs: caCertPool, Certificates: []tls.Certificate{cert}, InsecureSkipVerify: false}
+
+	return tlsConfig, nil
 }
 
 // GetClient returns the global MQTT client instance.

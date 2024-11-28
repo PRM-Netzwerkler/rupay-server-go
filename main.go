@@ -81,7 +81,7 @@ func init() {
 
 	// db migrations
 
-	runMigrations()
+	//runMigrations()
 
 	// Supertokens Init
 
@@ -164,10 +164,10 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	e := util.NewClient()
+	e := util.NewClient(config)
 
 	if e != nil {
-		log.Fatalf("failed to connect to mqtt broker: %v", err)
+		log.Fatalf("failed to connect to mqtt broker: %v", e)
 	}
 
 	router := server.Group("/api")
