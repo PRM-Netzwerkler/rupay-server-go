@@ -11,6 +11,8 @@ services:
     pull_policy: build
     depends_on:
       - postgres
+    networks:
+      - rupay
 
   postgres:
     image: postgres:latest
@@ -27,6 +29,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - rupay
 
 volumes:
   db:
