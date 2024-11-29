@@ -19,7 +19,7 @@ services:
       - db:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     env_file:
-      - ./app.env
+      - ./stack.env
     ports:
       - "5432:5432"
     healthcheck:
