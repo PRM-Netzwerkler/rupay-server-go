@@ -3,9 +3,9 @@ package util
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"fmt"
 	"log"
-	"os"
 	"sync"
 	"time"
 
@@ -33,7 +33,7 @@ func NewClient(con Config) error {
 	opts.SetUsername(con.MqttClientName)
 	opts.SetPassword(con.MqttClientPassword)
 
-	tlsConfig, _ := createTLSConfig()
+	tlsConfig, _ := createTLSConfig(con)
 
 	mqttClient := MQTT.NewClient(opts)
 
@@ -56,18 +56,29 @@ func NewClient(con Config) error {
 	return nil
 }
 
-func createTLSConfig() (*tls.Config, error) {
-	caCert, err := os.ReadFile("./util/cert/ca-root.crt")
+func createTLSConfig(con Config) (*tls.Config, error) {
+
+	// Decode the Base64 encoded cert and key
+	caCert, err := base64.StdEncoding.DecodeString(con.CertCaRoot)
 	if err != nil {
-		cwd, _ := os.Getwd()
-		log.Println(cwd)
-		log.Fatalf("failed to load ca certificate: %v", err)
+		log.Fatalf("Failed to decode CA certificate: %v", err)
 	}
+
+	mosquittoCert, err := base64.StdEncoding.DecodeString(con.CertMosquitto)
+	if err != nil {
+		log.Fatalf("Failed to decode Mosquitto certificate: %v", err)
+	}
+
+	mosquittoKey, err := base64.StdEncoding.DecodeString(con.KeyMosquitto)
+	if err != nil {
+		log.Fatalf("Failed to decode Mosquitto key: %v", err)
+	}
+
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
 	// load client cert and key
-	cert, err := tls.LoadX509KeyPair("./util/cert/mosquitto.crt", "./util/cert/mosquitto.key")
+	cert, err := tls.X509KeyPair(mosquittoCert, mosquittoKey)
 	if err != nil {
 		panic("Failed to load client certificate")
 	}

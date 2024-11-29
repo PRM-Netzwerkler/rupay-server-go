@@ -16,11 +16,14 @@ type Config struct {
 	MqttClientId       string `mapstructure:"MQTT_CLIENT_ID"`
 	MqttClientName     string `mapstructure:"MQTT_CLIENT_NAME"`
 	MqttClientPassword string `mapstructure:"MQTT_CLIENT_PASSWORD"`
+	CertCaRoot         string `mapstructure:"CERT_CA_ROOT"`
+	CertMosquitto      string `mapstructure:"CERT_MOSQUITTO"`
+	KeyMosquitto       string `mapstructure:"KEY_MOSQUITTO"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
 	viper.AddConfigPath(path)
-	viper.SetConfigName("app")
+	viper.SetConfigName("stack")
 	viper.SetConfigType("env")
 
 	viper.AutomaticEnv()
